@@ -1,0 +1,134 @@
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+}
+
+.colorWeak {
+  filter: invert(80%);
+}
+
+.ant-layout {
+  min-height: 100vh;
+  background-color: #fff !important;
+  background: #fff !important
+}
+
+.ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
+  left: unset;
+}
+
+canvas {
+  display: block;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+.tableSerch {
+  background-color: #fff;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-radius: 30px;
+  padding: 20px;
+  width: 100%;
+
+  .tableSerchSellBox {
+    display: flex;
+    width: 100%;
+
+  }
+
+  .tableSerchSell {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+    p {
+      margin: 0;
+      margin-right: 10px;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(142, 144, 147, 1);
+
+    }
+  }
+}
+.settingBox{
+  background-color: #fff;
+  background-color: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+.dataTable {
+  background-color: #fff;
+  border-radius: 30px;
+  overflow: hidden;
+  padding: 10px;
+
+  .ant-table-cell-row-hover {
+    background-color: rgba(126, 254, 25, 0.1) !important;
+  }
+
+  .ant-table-thead {
+    tr {
+      th {
+        background-color: #fff;
+        font-size: 14px;
+        color: rgba(142, 144, 147, 1);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .ant-table-tbody {
+    tr {
+      td {
+        background-color: #fff;
+        font-size: 14px;
+        color: rgba(0, 0, 0, 1);
+        font-weight: 700;
+        white-space: nowrap;
+
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .ant-table {
+    width: 100%;
+    overflow-x: auto;
+
+    &-thead>tr,
+    &-tbody>tr {
+
+      >th,
+      >td {
+        white-space: pre;
+
+        >span {
+          display: block;
+        }
+      }
+    }
+  }
+}
