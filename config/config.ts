@@ -14,6 +14,9 @@ export default defineConfig({
    * @doc https://umijs.org/docs/api/config#hash
    */
   hash: true,
+  jsMinifierOptions: {
+    target: ['chrome80', 'es2020'],
+  },
 
   /**
    * @name 兼容性设置
@@ -81,8 +84,8 @@ export default defineConfig({
     locale: true,
     ...defaultSettings,
   },
-  history:{
-    type:'hash'
+  history: {
+    type: 'hash',
   },
   /**
    * @name moment2dayjs 插件

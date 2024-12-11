@@ -1,13 +1,4 @@
-import {
-  Button,
-  DatePicker,
-  Input,
-  Radio,
-  RadioChangeEvent,
-  Select,
-  Table,
-  message
-} from 'antd';
+import { Button, DatePicker, Input, Radio, RadioChangeEvent, Select, Table, message } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLazyQuery, useQuery } from '@apollo/client';
 import moment from 'moment';
@@ -15,6 +6,7 @@ import { history } from '@umijs/max';
 import { GET_DATA, GET_LEVEL } from '../../api/index';
 import { SettingOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
+import { ethers } from 'ethers';
 
 const TableList: React.FC = () => {
   const [page, setPage] = useState(1);
@@ -23,12 +15,12 @@ const TableList: React.FC = () => {
   const [variablesData, setVariablesData] = useState({ page, pageSize } as any);
 
   const { data, loading, error, updateQuery } = useQuery(GET_DATA, {
-    variables: variablesData
+    variables: variablesData,
   });
 
   const dateOptions = {
     dateStyle: 'short',
-    timeStyle: 'short'
+    timeStyle: 'short',
   } as Intl.DateTimeFormatOptions;
 
   const [dataSource, setDataSource] = useState<any[]>([]);
@@ -48,37 +40,73 @@ const TableList: React.FC = () => {
       console.log(data);
       return {
         ...data,
-        ...newData
+        ...newData,
       };
     });
   }, [variablesData]);
   const [getLeavelFnc] = useLazyQuery(GET_LEVEL);
 
-  const getLevelInit = ()=>{
-    const token = localStorage.getItem('token')
+  const getLevelInit = () => {
+    const token = localStorage.getItem('token');
     getLeavelFnc({
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
-    }).then((levelData)=>{
-      if(!levelData?.data?.getAddressLevel||levelData?.data?.getAddressLevel==='0'){
-        message.error('No permission')
+    }).then((levelData) => {
+      if (!levelData?.data?.getAddressLevel || levelData?.data?.getAddressLevel === '0') {
+        message.error('No permission');
 
         setTimeout(() => {
-          localStorage.clear()
-          history.push('/user/login')
+          localStorage.clear();
+          history.push('/user/login');
         }, 1000);
       }
-    })
-    
-  
-      
-  }
-  useEffect(()=>{
-    getLevelInit()
-  },[])
+    });
+  };
+  useEffect(() => {
+    getLevelInit();
+  }, []);
+
+  const stakeAbi = [
+    {
+      inputs: [
+        {
+          internalType: 'address',
+          name: '_user',
+          type: 'address',
+        },
+        {
+          internalType: 'bool',
+          name: '_status',
+          type: 'bool',
+        },
+      ],
+      name: 'updateBlacklist',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
+  ];
+  const ethereum = (window as any).ethereum;
+  const provider = new ethers.BrowserProvider(ethereum);
+  const signer = provider.getSigner();
+  const handleMdfBlackStatus = async (userAddress: string, status: boolean) => {
+    const stakeContractAddress = '0x0888c77201aEC2d6b5A95b78e92D1680D8A99423'; // 合约地址
+    const stakeContract = new ethers.Contract(stakeContractAddress, stakeAbi, await signer);
+
+    try {
+      // 调用 updateBlacklist 并传递 _user 地址和 _status 状态
+      const updateTx = await stakeContract.updateBlacklist(userAddress, status);
+      await updateTx.wait(); // 等待交易完成
+
+      message.success('Blacklist status updated successfully!');
+    } catch (error) {
+      console.error(error);
+      message.error('Failed to update blacklist');
+    }
+  };
 
   const columns = [
     {
@@ -95,7 +123,7 @@ const TableList: React.FC = () => {
             {data.title}
           </a>
         );
-      }
+      },
     },
     {
       title: 'Campaign Time',
@@ -109,19 +137,15 @@ const TableList: React.FC = () => {
               new Date(data.end_date).toLocaleString(undefined, dateOptions)}
           </p>
         );
-      }
+      },
     },
     {
       title: 'Timestamp',
       dataIndex: 'Timestamp',
       key: 'Timestamp',
       render: (_: any, data: any) => {
-        return (
-          <p>
-            {new Date(data.updateTime).toLocaleString(undefined, dateOptions)}
-          </p>
-        );
-      }
+        return <p>{new Date(data.updateTime).toLocaleString(undefined, dateOptions)}</p>;
+      },
     },
     {
       title: 'Visitors',
@@ -129,7 +153,7 @@ const TableList: React.FC = () => {
       key: 'Visitors',
       render: (_: any, data: any) => {
         return <p>{data.visitors}</p>;
-      }
+      },
     },
     {
       title: 'Visitor Increase',
@@ -137,7 +161,7 @@ const TableList: React.FC = () => {
       key: 'VisitorIncrease',
       render: (_: any, data: any) => {
         return <p>{data.visitorsGrowth}</p>;
-      }
+      },
     },
     {
       title: 'Conversions',
@@ -145,7 +169,7 @@ const TableList: React.FC = () => {
       key: 'Conversions',
       render: (_: any, data: any) => {
         return <p>{data.conversions}</p>;
-      }
+      },
     },
     {
       title: 'Conversion Increase',
@@ -153,7 +177,7 @@ const TableList: React.FC = () => {
       key: 'ConversionIncrease',
       render: (_: any, data: any) => {
         return <p>{data.conversionIncrease}</p>;
-      }
+      },
     },
     {
       title: 'Conversion Rate',
@@ -161,23 +185,15 @@ const TableList: React.FC = () => {
       key: 'ConversionRate',
       render: (_: any, data: any) => {
         return <p>{data.conversionRate}</p>;
-      }
+      },
     },
     {
       title: 'Listing Status',
       dataIndex: 'Listing Status',
       key: 'Listing Status',
       render: (_: any, data: any) => {
-        return (
-          <p>
-            {data.isOfficial
-              ? 'workshop'
-              : data.listed
-              ? 'trending'
-              : 'Not listed'}
-          </p>
-        );
-      }
+        return <p>{data.isOfficial ? 'workshop' : data.listed ? 'trending' : 'Not listed'}</p>;
+      },
     },
     {
       title: 'Conversion Rate Increase',
@@ -185,7 +201,7 @@ const TableList: React.FC = () => {
       key: 'Conversion Rate Increase',
       render: (_: any, data: any) => {
         return <p>{data.conversionRateGrowthRate}</p>;
-      }
+      },
     },
     {
       title: 'Micro-influencers',
@@ -193,7 +209,7 @@ const TableList: React.FC = () => {
       key: 'Micro-influencers',
       render: (_: any, data: any) => {
         return <p>{data.microInfluencers}</p>;
-      }
+      },
     },
     {
       title: 'Referred Visitors',
@@ -201,7 +217,7 @@ const TableList: React.FC = () => {
       key: 'ReferredVisitors',
       render: (_: any, data: any) => {
         return <p>{data.referredVisitors}</p>;
-      }
+      },
     },
     {
       title: 'Referred Conversions',
@@ -209,7 +225,7 @@ const TableList: React.FC = () => {
       key: 'ReferredConversions',
       render: (_: any, data: any) => {
         return <p>{data.referredConversions}</p>;
-      }
+      },
     },
     {
       title: 'Most Referral Wallet',
@@ -225,7 +241,7 @@ const TableList: React.FC = () => {
               : '--'}
           </p>
         );
-      }
+      },
     },
     {
       title: 'Most Referral X',
@@ -241,21 +257,15 @@ const TableList: React.FC = () => {
               : '--'}
           </p>
         );
-      }
+      },
     },
     {
       title: 'Most Referral Count',
       dataIndex: 'Most Referral Count',
       key: 'Most Referral Count',
       render: (_: any, data: any) => {
-        return (
-          <p>
-            {data.referralInfo.length > 0
-              ? data.referralInfo[0].referralNumber
-              : '--'}
-          </p>
-        );
-      }
+        return <p>{data.referralInfo.length > 0 ? data.referralInfo[0].referralNumber : '--'}</p>;
+      },
     },
     {
       title: 'More',
@@ -263,17 +273,37 @@ const TableList: React.FC = () => {
       key: 'more',
       render: (_: any, data: any) => {
         return (
-          <Button
-            type="primary"
-            onClick={() => {
-              history.push('/detailsList?id=' + data.airdrop_id);
-            }}
-          >
-            More
-          </Button>
+          <>
+            <Button
+              type="primary"
+              onClick={() => {
+                history.push('/detailsList?id=' + data.airdrop_id);
+              }}
+            >
+              More
+            </Button>
+            <Button
+              type="primary"
+              style={{ marginLeft: '10px', backgroundColor: 'red' }}
+              onClick={() => {
+                handleMdfBlackStatus('0xB02A15e62D6D3c967CBA393C7fd9619c41Be662b', true);
+              }}
+            >
+              add blacklist
+            </Button>
+            <Button
+              type="primary"
+              style={{ marginLeft: '10px', backgroundColor: 'red' }}
+              onClick={() => {
+                handleMdfBlackStatus('0xB02A15e62D6D3c967CBA393C7fd9619c41Be662b', false);
+              }}
+            >
+              remove blacklist
+            </Button>
+          </>
         );
-      }
-    }
+      },
+    },
   ];
 
   const { RangePicker } = DatePicker;
@@ -286,7 +316,7 @@ const TableList: React.FC = () => {
       setVariablesData({
         ...variablesData,
         start_date: formattedStartDate,
-        end_date: formattedEndDate
+        end_date: formattedEndDate,
       });
     }
   };
@@ -294,7 +324,7 @@ const TableList: React.FC = () => {
     console.log('radio checked', e.target.value);
     setVariablesData({
       ...variablesData,
-      is_active: e.target.value
+      is_active: e.target.value,
     });
     setIsActive(e.target.value);
   };
@@ -302,11 +332,11 @@ const TableList: React.FC = () => {
   const [checkedList, setCheckedList] = useState(defaultCheckedList);
   const newColumns = columns.map((item) => ({
     ...item,
-    hidden: !checkedList.includes(item.key as string)
+    hidden: !checkedList.includes(item.key as string),
   }));
   const options = columns.map(({ key, title }) => ({
     label: title,
-    value: key
+    value: key,
   }));
 
   const { Option } = Select;
@@ -363,7 +393,7 @@ const TableList: React.FC = () => {
               onChange={(e) => {
                 setVariablesData({
                   ...variablesData,
-                  id: e.target.value
+                  id: e.target.value,
                 });
               }}
               placeholder="Campaign Id"
@@ -375,7 +405,7 @@ const TableList: React.FC = () => {
               onChange={(e) => {
                 setVariablesData({
                   ...variablesData,
-                  name: e.target.value
+                  name: e.target.value,
                 });
               }}
               placeholder="Campaign Name"
@@ -405,7 +435,7 @@ const TableList: React.FC = () => {
                 top: '10px',
                 right: '10px',
                 cursor: 'pointer',
-                zIndex: 1000
+                zIndex: 1000,
               }}
             />
             <Select
@@ -433,7 +463,7 @@ const TableList: React.FC = () => {
           style={{
             marginTop: '10px',
             display: 'flex',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
           }}
         >
           <div></div>
@@ -447,7 +477,7 @@ const TableList: React.FC = () => {
         pagination={{
           current: page,
           pageSize: pageSize,
-          total: dataSource.length > 0 ? dataSource[0].total : 0
+          total: dataSource.length > 0 ? dataSource[0].total : 0,
         }}
         scroll={{ x: true }}
         loading={loading}
@@ -460,7 +490,7 @@ const TableList: React.FC = () => {
           setVariablesData({
             ...variablesData,
             page: e.current,
-            pageSize: e.pageSize
+            pageSize: e.pageSize,
           });
         }}
       />
